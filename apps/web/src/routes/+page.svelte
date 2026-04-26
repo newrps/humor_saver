@@ -71,9 +71,12 @@
           <span class="time">{timeAgo(a.published_at || a.collected_at)}</span>
         </div>
         <div class="bottom">
-          <h2>{a.title}</h2>
-          {#if a.summary}
-            <p class="summary">{a.summary.length > 200 ? a.summary.slice(0, 200) + '…' : a.summary}</p>
+          <h2>{a.translated_title || a.title}</h2>
+          {#if a.translated_title && a.language && a.language !== 'ko'}
+            <p class="orig-title">{a.title} <span class="lang">[{a.language.toUpperCase()}]</span></p>
+          {/if}
+          {#if a.translated_summary || a.summary}
+            <p class="summary">{(a.translated_summary || a.summary).slice(0, 200)}{(a.translated_summary || a.summary).length > 200 ? '…' : ''}</p>
           {/if}
           <a class="link" href={a.url} target="_blank" rel="noopener noreferrer">원문 →</a>
         </div>
@@ -152,6 +155,19 @@
     line-height: 1.35;
     text-shadow: 0 2px 8px rgba(0,0,0,0.8);
     word-break: keep-all;
+  }
+  .orig-title {
+    margin: -6px 0 12px;
+    font-size: 12px;
+    color: #a1a1aa;
+    line-height: 1.4;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  }
+  .lang {
+    background: rgba(255,255,255,0.15);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
   }
   .summary {
     margin: 0 0 16px;

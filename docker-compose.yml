@@ -149,7 +149,9 @@ services:
       TEI_URL: http://tei:80
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-intfloat/multilingual-e5-small}
       NLP_INTERVAL_SEC: ${NLP_INTERVAL_SEC:-60}
-      NLP_BATCH_SIZE: ${NLP_BATCH_SIZE:-20}  # 5분마다 미처리 뉴스 처리
+      NLP_BATCH_SIZE: ${NLP_BATCH_SIZE:-20}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-4-5-20251001}
 
   # ───────────────────────────────────────────────
   # 7. Discoverer — 매체 자동 발견 (일일 1회)

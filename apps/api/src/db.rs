@@ -16,6 +16,9 @@ pub struct ArticleRow {
     pub published_at: Option<DateTime<Utc>>,
     pub collected_at: DateTime<Utc>,
     pub embedding_status: String,
+    pub language: Option<String>,
+    pub translated_title: Option<String>,
+    pub translated_summary: Option<String>,
 }
 
 #[derive(Debug, Serialize, FromRow)]

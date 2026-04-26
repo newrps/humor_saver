@@ -48,7 +48,8 @@ async fn list_articles(
         sqlx::query_as(r#"
             SELECT a.id, a.source_id, s.name AS source_name, s.category AS source_category,
                    a.title, a.summary, a.url, a.image_url, a.author,
-                   a.published_at, a.collected_at, a.embedding_status
+                   a.published_at, a.collected_at, a.embedding_status,
+                   a.language, a.translated_title, a.translated_summary
               FROM articles a
               JOIN sources s ON s.id = a.source_id
              WHERE a.tsv @@ plainto_tsquery('simple', $1)
@@ -65,7 +66,8 @@ async fn list_articles(
         sqlx::query_as(r#"
             SELECT a.id, a.source_id, s.name AS source_name, s.category AS source_category,
                    a.title, a.summary, a.url, a.image_url, a.author,
-                   a.published_at, a.collected_at, a.embedding_status
+                   a.published_at, a.collected_at, a.embedding_status,
+                   a.language, a.translated_title, a.translated_summary
               FROM articles a
               JOIN sources s ON s.id = a.source_id
              WHERE ($1::int IS NULL OR a.source_id = $1)

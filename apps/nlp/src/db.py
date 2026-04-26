@@ -24,7 +24,7 @@ def fetch_pending_articles(limit: int = 20) -> list[dict]:
     with conn() as c, c.cursor() as cur:
         cur.execute(
             """
-            SELECT id, source_id, title, summary, content, published_at
+            SELECT id, source_id, title, summary, content, published_at, language
               FROM articles
              WHERE embedding_status = 'pending'
                AND title IS NOT NULL
@@ -34,6 +34,61 @@ def fetch_pending_articles(limit: int = 20) -> list[dict]:
             (limit,),
         )
         return cur.fetchall()
+
+
+def fetch_pending_translations(limit: int = 20) -> list[dict]:
+    """번역 대기 중인 외국어 기사. 한국어는 자동 skipped 됨 (트리거)."""
+    with conn() as c, c.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, language, title, summary
+              FROM articles
+             WHERE translation_status = 'pending'
+               AND language != 'ko'
+               AND title IS NOT NULL
+             ORDER BY collected_at ASC
+             LIMIT %s
+            """,
+            (limit,),
+        )
+        return cur.fetchall()
+
+
+def mark_translation_success(
+    article_id: int, translated_title: str, translated_summary: str | None, model: str
+) -> None:
+    with conn() as c, c.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE articles
+               SET translated_title = %s,
+                   translated_summary = %s,
+                   translation_model = %s,
+                   translation_status = 'success',
+                   translated_at = NOW()
+             WHERE id = %s
+            """,
+            (translated_title, translated_summary, model, article_id),
+        )
+        c.commit()
+
+
+def mark_translation_failed(article_id: int, error: str) -> None:
+    with conn() as c, c.cursor() as cur:
+        cur.execute(
+            "UPDATE articles SET translation_status = 'failed' WHERE id = %s",
+            (article_id,),
+        )
+        c.commit()
+
+
+def mark_translation_skipped(article_id: int) -> None:
+    with conn() as c, c.cursor() as cur:
+        cur.execute(
+            "UPDATE articles SET translation_status = 'skipped' WHERE id = %s",
+            (article_id,),
+        )
+        c.commit()
 
 
 def mark_embedding_success(article_id: int, embedding_id: UUID, model: str) -> None:

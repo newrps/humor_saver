@@ -21,6 +21,7 @@ from uuid import uuid4
 import db
 import embedding
 import keywords as kw_extract
+import translator
 from qdrant import COLLECTION, ensure_collection, upsert as qdrant_upsert
 
 
@@ -89,20 +90,40 @@ def round_once() -> int:
     """한 번 처리 라운드. 처리한 건수 반환."""
     blocked = db.get_blocked_words()
     pending = db.fetch_pending_articles(limit=BATCH_SIZE)
-    if not pending:
-        return 0
+    embedding_count = 0
+    if pending:
+        print(f"[{now()}] 임베딩 처리 시작: {len(pending)}건 (모델={MODEL})")
+        for art in pending:
+            if process_one(art, blocked):
+                embedding_count += 1
+        print(f"[{now()}] 임베딩 완료: {embedding_count}/{len(pending)}")
 
-    print(f"[{now()}] 처리 시작: {len(pending)}건 (모델={MODEL})")
-    success = 0
-    for art in pending:
-        if process_one(art, blocked):
-            success += 1
-    print(f"[{now()}] 처리 완료: {success}/{len(pending)} 성공")
-    return success
+    # 번역 큐 (외국어 기사만)
+    translation_count = 0
+    if translator.ENABLED:
+        pending_t = db.fetch_pending_translations(limit=BATCH_SIZE)
+        if pending_t:
+            print(f"[{now()}] 번역 시작: {len(pending_t)}건 ({translator.MODEL})")
+            for art in pending_t:
+                aid = art["id"]
+                try:
+                    t_title, t_summary = translator.translate(
+                        art["title"], art.get("summary"), art["language"]
+                    )
+                    db.mark_translation_success(aid, t_title, t_summary, translator.MODEL)
+                    translation_count += 1
+                    print(f"  ✓ #{aid} ({art['language']}→ko)")
+                except Exception as e:
+                    db.mark_translation_failed(aid, str(e))
+                    print(f"  ✗ #{aid}: {e}")
+            print(f"[{now()}] 번역 완료: {translation_count}/{len(pending_t)}")
+
+    return embedding_count + translation_count
 
 
 def main() -> None:
     print(f"[{now()}] NLP 워커 시작 (interval={INTERVAL}s, batch={BATCH_SIZE})")
+    print(f"[{now()}] 번역 활성화: {translator.ENABLED} (모델={translator.MODEL})")
 
     # TEI 응답 대기 + 차원 확인 + 컬렉션 보장
     print(f"[{now()}] TEI 차원 확인...")
