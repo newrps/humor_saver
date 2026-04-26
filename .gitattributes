@@ -1,0 +1,14 @@
+# NAS(Linux)에서 사용해야 하는 파일들은 LF 강제
+Makefile      text eol=lf
+*.sh          text eol=lf
+*.py          text eol=lf
+*.rs          text eol=lf
+Dockerfile    text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+*.sql         text eol=lf
+
+# 바이너리 파일 표기
+*.png         binary
+*.jpg         binary
+*.webp        binary

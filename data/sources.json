@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "description": "유머·커뮤니티 사이트 (한국 + 글로벌)",
+    "updated": "2026-04-26",
+    "note": "RSS 있는 사이트만. 일부 사이트는 status 404 + RSS 본문 패턴 (collector 가 처리)"
+  },
+  "categories": {
+    "humor_kr": "한국 유머·커뮤니티",
+    "humor_global": "글로벌 유머·밈 (영어)",
+    "humor_jp": "일본 정리 사이트",
+    "dcgallery": "DCInside 갤러리"
+  },
+  "sources": [
+    { "name": "PGR21 자유게시판", "category": "humor_kr", "language": "ko", "url": "https://www.pgr21.com", "rss": "https://www.pgr21.com/free.rss" },
+    { "name": "PGR21 게임", "category": "humor_kr", "language": "ko", "url": "https://www.pgr21.com", "rss": "https://www.pgr21.com/game.rss" },
+    { "name": "PGR21 유머", "category": "humor_kr", "language": "ko", "url": "https://www.pgr21.com", "rss": "https://www.pgr21.com/humor.rss" },
+    { "name": "클리앙 모두의공원", "category": "humor_kr", "language": "ko", "url": "https://www.clien.net", "rss": "https://www.clien.net/service/board/park.rss" },
+    { "name": "클리앙 새로운소식", "category": "humor_kr", "language": "ko", "url": "https://www.clien.net", "rss": "https://www.clien.net/service/board/news.rss" },
+
+    { "name": "Reddit r/funny", "category": "humor_global", "language": "en", "url": "https://www.reddit.com/r/funny", "rss": "https://www.reddit.com/r/funny/.rss" },
+    { "name": "Reddit r/memes", "category": "humor_global", "language": "en", "url": "https://www.reddit.com/r/memes", "rss": "https://www.reddit.com/r/memes/.rss" },
+    { "name": "Reddit r/AskReddit", "category": "humor_global", "language": "en", "url": "https://www.reddit.com/r/AskReddit", "rss": "https://www.reddit.com/r/AskReddit/.rss" },
+    { "name": "Reddit r/wholesomememes", "category": "humor_global", "language": "en", "url": "https://www.reddit.com/r/wholesomememes", "rss": "https://www.reddit.com/r/wholesomememes/.rss" },
+    { "name": "Reddit r/Korea", "category": "humor_global", "language": "en", "url": "https://www.reddit.com/r/Korea", "rss": "https://www.reddit.com/r/Korea/.rss" },
+    { "name": "Reddit r/hanguk", "category": "humor_kr", "language": "ko", "url": "https://www.reddit.com/r/hanguk", "rss": "https://www.reddit.com/r/hanguk/.rss" },
+
+    { "name": "9GAG", "category": "humor_global", "language": "en", "url": "https://9gag.com", "rss": "https://9gag.com/rss" },
+    { "name": "Bored Panda", "category": "humor_global", "language": "en", "url": "https://www.boredpanda.com", "rss": "https://www.boredpanda.com/feed/" },
+
+    { "name": "はちま起稿", "category": "humor_jp", "language": "ja", "url": "https://blog.esuteru.com", "rss": "https://blog.esuteru.com/index.rdf" },
+    { "name": "痛いニュース", "category": "humor_jp", "language": "ja", "url": "http://blog.livedoor.jp/dqnplus", "rss": "http://blog.livedoor.jp/dqnplus/index.rdf" }
+  ]
+}

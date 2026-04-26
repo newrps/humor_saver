@@ -1,0 +1,31 @@
+# 환경변수 (비밀번호·API key)
+.env
+.env.local
+.env.*.local
+
+# Docker 데이터
+data/postgres/
+data/qdrant/
+data/tei-cache/
+
+# Rust 빌드 산출물
+apps/*/target/
+
+# Node.js
+node_modules/
+apps/web/build/
+apps/web/.svelte-kit/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

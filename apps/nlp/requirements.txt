@@ -1,0 +1,6 @@
+psycopg[binary]==3.2.3
+httpx==0.28.1
+kiwipiepy==0.20.4
+qdrant-client==1.12.1
+pydantic==2.10.3
+tenacity==9.0.0

@@ -1,0 +1,192 @@
+# humor-saver · 시놀로지 NAS용 Docker Compose
+#
+# 배포: /volume1/docker/humor-saver/ 에 통째 복사 후
+#   1. cp .env.example .env  → 값 채우기
+#   2. docker-compose up -d
+#
+# 시놀로지 Container Manager 에서도 GUI로 import 가능
+
+name: humor-saver
+
+services:
+  # ───────────────────────────────────────────────
+  # 1. PostgreSQL — 정형 데이터 (뉴스, 키워드, 매체)
+  # ───────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: humor-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-news}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-news}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    # 외부 노출 X — 디버깅 시 `docker exec -it humor-postgres psql -U newrps -d news`
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-news}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  # ───────────────────────────────────────────────
+  # 2. Qdrant — 벡터 DB (의미 검색)
+  # ───────────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: humor-qdrant
+    restart: unless-stopped
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+    # 외부 노출 X — 대시보드 보고 싶으면 SSH 터널: ssh -L 6333:localhost:6333 NAS
+    expose:
+      - "6333"
+      - "6334"
+    environment:
+      QDRANT__LOG_LEVEL: INFO
+      # API key는 .env에 QDRANT_API_KEY 가 있을 때만 set (빈 문자열은 인증 활성화 부작용)
+    # NAS 배포 시 외부 노출하면 docker-compose.override.yml 또는 별도 환경변수로 API key 추가
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  # ───────────────────────────────────────────────
+  # 3. TEI — Text Embeddings Inference (HuggingFace)
+  # CPU 모드. NAS는 GPU 없으니 cpu 이미지 사용.
+  # ───────────────────────────────────────────────
+  tei:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.7
+    container_name: humor-tei
+    restart: unless-stopped
+    command:
+      - --model-id=${EMBEDDING_MODEL:-intfloat/multilingual-e5-small}
+      - --port=80
+      - --max-batch-tokens=16384
+    volumes:
+      - ./data/tei-cache:/data
+    # 외부 노출 X — nlp/api 가 http://tei:80 으로 내부 호출
+    expose:
+      - "80"
+    environment:
+      HF_HOME: /data
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+
+  # ───────────────────────────────────────────────
+  # 4. API — Rust (axum). 프론트가 호출.
+  # ───────────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: humor-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-news}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-news}
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      TEI_URL: http://tei:80
+      RUST_LOG: info
+    # 외부 노출 X — 같은 docker 네트워크 안의 web/nlp 만 http://api:8080 으로 접근
+    expose:
+      - "8080"
+
+  # ───────────────────────────────────────────────
+  # 5. Collector — Rust. RSS·빅카인즈 수집 (cron 처럼 주기 실행)
+  # ───────────────────────────────────────────────
+  collector:
+    build:
+      context: ./apps/collector
+      dockerfile: Dockerfile
+    container_name: humor-collector
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-news}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-news}
+      BIGKINDS_API_KEY: ${BIGKINDS_API_KEY:-}
+      COLLECT_CRON: ${COLLECT_CRON:-0 */1 * * *}  # 기본: 매시 정각
+      RUST_LOG: info
+    volumes:
+      - ./data/sources.json:/app/sources.json:ro
+
+  # ───────────────────────────────────────────────
+  # 6. NLP — Python. 키워드 추출 + TEI 호출 → Qdrant 저장
+  # ───────────────────────────────────────────────
+  nlp:
+    build:
+      context: ./apps/nlp
+      dockerfile: Dockerfile
+    container_name: humor-nlp
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      tei:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-news}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-news}
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      TEI_URL: http://tei:80
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-intfloat/multilingual-e5-small}
+      NLP_INTERVAL_SEC: ${NLP_INTERVAL_SEC:-60}
+      NLP_BATCH_SIZE: ${NLP_BATCH_SIZE:-20}  # 5분마다 미처리 뉴스 처리
+
+  # ───────────────────────────────────────────────
+  # 7. Discoverer — 매체 자동 발견 (일일 1회)
+  # ───────────────────────────────────────────────
+  discoverer:
+    build:
+      context: ./apps/discoverer
+      dockerfile: Dockerfile
+    container_name: humor-discoverer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-news}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-news}
+      BIGKINDS_API_KEY: ${BIGKINDS_API_KEY:-}
+      DISCOVERER_TIME: ${DISCOVERER_TIME:-03:00}
+      DISCOVERER_RUN_ON_BOOT: ${DISCOVERER_RUN_ON_BOOT:-false}
+
+  # ───────────────────────────────────────────────
+  # 8. Web — SvelteKit (node adapter)
+  # ───────────────────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: humor-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
+      HOME_IPS: ${HOME_IPS:-}
+      SITE_PASSWORD: ${SITE_PASSWORD:-}
+    ports:
+      - "${WEB_PORT:-5173}:3000"
+
+# ───────────────────────────────────────────────
+# 데이터 볼륨은 모두 ./data/ 아래 (시놀로지 백업 단순화)
+# ───────────────────────────────────────────────
