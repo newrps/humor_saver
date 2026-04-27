@@ -9,9 +9,9 @@ use tracing::{debug, info};
 
 use crate::db::{self, NewArticle, Source};
 
-// 일부 한국 매체가 봇 UA 차단 → 브라우저 호환 UA 사용
+// 일부 한국 매체 + Reddit 가 봇 UA 차단 → 진짜 브라우저 UA 사용
 const USER_AGENT: &str =
-    "Mozilla/5.0 (compatible; news-tracker/0.1; +https://github.com/newrps/news_saver) AppleWebKit/537.36";
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0 Safari/537.36";
 
 pub async fn collect(pool: &PgPool, src: &Source) -> Result<i64> {
     let rss_url = src
