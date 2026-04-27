@@ -21,7 +21,7 @@ def embed(text: str) -> list[float]:
     """단일 텍스트 → 임베딩 벡터"""
     if not text or not text.strip():
         raise ValueError("빈 텍스트")
-    resp = _client.post(f"{TEI_URL}/embed", json={"inputs": text})
+    resp = _client.post(f"{TEI_URL}/embed", json={"inputs": text, "truncate": True})
     resp.raise_for_status()
     data = resp.json()
     # TEI 응답: [[float, ...]]  (inputs가 리스트면 여러 개)
