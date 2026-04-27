@@ -14,10 +14,18 @@ const USER_AGENT: &str =
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0 Safari/537.36";
 
 pub async fn collect(pool: &PgPool, src: &Source) -> Result<i64> {
-    let rss_url = src
+    let rss_url_orig = src
         .rss_url
         .as_deref()
         .ok_or_else(|| anyhow!("rss_url 없음"))?;
+
+    // Reddit 은 www → old 가 봇 차단이 약함
+    let rss_url: String = if rss_url_orig.contains("www.reddit.com") {
+        rss_url_orig.replace("www.reddit.com", "old.reddit.com")
+    } else {
+        rss_url_orig.to_string()
+    };
+    let is_reddit = rss_url.contains("reddit.com");
 
     debug!("[{}] GET {}", src.name, rss_url);
     let client = reqwest::Client::builder()
@@ -27,14 +35,30 @@ pub async fn collect(pool: &PgPool, src: &Source) -> Result<i64> {
 
     // status 코드 무시 (일부 매체가 200 대신 404로 보내면서도 정상 RSS 반환 — bloter, IT조선 등)
     // 본문이 진짜 RSS면 파서가 처리, 아니면 파서가 에러
-    let resp = client
-        .get(rss_url)
+    let mut req = client
+        .get(&rss_url)
         .header(
             "Accept",
-            "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+            "application/rss+xml, application/atom+xml, application/xml, text/xml, */*;q=0.8",
         )
-        .send()
-        .await?;
+        .header("Accept-Language", "en-US,en;q=0.9,ko;q=0.8")
+        .header("Cache-Control", "no-cache")
+        .header("Pragma", "no-cache")
+        .header("DNT", "1")
+        .header("Upgrade-Insecure-Requests", "1");
+    if is_reddit {
+        // 진짜 사람이 reddit 메인에서 클릭한 것처럼 위장
+        req = req
+            .header("Referer", "https://old.reddit.com/")
+            .header("Sec-Fetch-Dest", "document")
+            .header("Sec-Fetch-Mode", "navigate")
+            .header("Sec-Fetch-Site", "same-origin")
+            .header("Sec-Fetch-User", "?1")
+            .header("Sec-Ch-Ua", "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"24\"")
+            .header("Sec-Ch-Ua-Mobile", "?0")
+            .header("Sec-Ch-Ua-Platform", "\"Linux\"");
+    }
+    let resp = req.send().await?;
     let status = resp.status();
     let bytes = resp.bytes().await?;
     if bytes.is_empty() {
