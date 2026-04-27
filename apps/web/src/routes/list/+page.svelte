@@ -12,18 +12,18 @@
   }
 </script>
 
-<svelte:head><title>최근 기사 · news-tracker</title></svelte:head>
+<svelte:head><title>목록 · Ps Humor</title></svelte:head>
 
 <div class="search-bar">
-  <form method="get" action="/">
-    <input type="search" name="q" placeholder="키워드 풀텍스트 검색 (예: 이란 핵)" bind:value={q} />
+  <form method="get" action="/list">
+    <input type="search" name="q" placeholder="키워드 검색 (예: 고양이, 짤)" bind:value={q} />
     <button type="submit">검색</button>
   </form>
   <p class="hint">의미 검색은 <a href="/search">여기</a>에서.</p>
 </div>
 
 <section>
-  <h2>{data.q ? `"${data.q}" 검색 결과` : '최근 기사'}</h2>
+  <h2>{data.q ? `"${data.q}" 검색 결과` : '최근 게시물'}</h2>
   <p class="count">{data.articles.length}건</p>
 
   <div class="grid">
