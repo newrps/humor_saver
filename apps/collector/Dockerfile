@@ -4,6 +4,11 @@ FROM rust:1-slim AS builder
 
 WORKDIR /app
 
+# native-tls = system OpenSSL → reddit JA3 차단 우회
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends pkg-config libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
 # 의존성 캐시 활용을 위해 Cargo.toml만 먼저 복사
 COPY Cargo.toml ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs && \
@@ -18,7 +23,7 @@ RUN cargo build --release
 FROM debian:bookworm-slim
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates tzdata && \
+    apt-get install -y --no-install-recommends ca-certificates tzdata libssl3 && \
     rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Asia/Seoul
