@@ -117,6 +117,9 @@ pub struct SearchHitOut {
     pub image_url: Option<String>,
     pub source_name: Option<String>,
     pub published_at: Option<String>,
+    pub language: Option<String>,
+    pub translated_title: Option<String>,
+    pub translated_summary: Option<String>,
 }
 
 async fn semantic_search(
@@ -148,8 +151,12 @@ async fn semantic_search(
         return Ok(Json(json!({ "items": [], "query": query })));
     }
 
-    let rows: Vec<(i64, String, Option<String>, String, Option<String>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(r#"
-        SELECT a.id, a.title, a.summary, a.url, a.image_url, s.name, a.published_at
+    let rows: Vec<(
+        i64, String, Option<String>, String, Option<String>, Option<String>,
+        Option<chrono::DateTime<chrono::Utc>>, Option<String>, Option<String>, Option<String>,
+    )> = sqlx::query_as(r#"
+        SELECT a.id, a.title, a.summary, a.url, a.image_url, s.name, a.published_at,
+               a.language, a.translated_title, a.translated_summary
           FROM articles a
           JOIN sources s ON s.id = a.source_id
          WHERE a.id = ANY($1)
@@ -172,6 +179,9 @@ async fn semantic_search(
             image_url: row.4.clone(),
             source_name: row.5.clone(),
             published_at: row.6.map(|d| d.to_rfc3339()),
+            language: row.7.clone(),
+            translated_title: row.8.clone(),
+            translated_summary: row.9.clone(),
         })
     }).collect();
 

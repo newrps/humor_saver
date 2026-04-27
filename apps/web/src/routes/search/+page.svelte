@@ -3,14 +3,14 @@
   let q = $state(data.q);
 </script>
 
-<svelte:head><title>의미 검색 · news-tracker</title></svelte:head>
+<svelte:head><title>의미 검색 · Ps Humor</title></svelte:head>
 
 <div class="search-bar">
   <form method="get" action="/search">
-    <input type="search" name="q" placeholder="자연어로 검색 (예: 미국 금리 인하 영향)" bind:value={q} autofocus />
+    <input type="search" name="q" placeholder="자연어로 검색 (예: 고양이, 사기 결혼, 사고)" bind:value={q} autofocus />
     <button type="submit">의미 검색</button>
   </form>
-  <p class="hint">키워드가 없어도 의미가 비슷한 기사를 찾습니다 (벡터 임베딩 기반).</p>
+  <p class="hint">apple 로 검색해도 사과 게시물이 나옵니다 (다국어 벡터 검색).</p>
 </div>
 
 {#if data.error}
@@ -31,9 +31,14 @@
             <span class="time">{r.published_at ? new Date(r.published_at).toLocaleString('ko-KR') : ''}</span>
           </div>
           <h3>
-            <a href={r.url} target="_blank" rel="noopener noreferrer">{r.title}</a>
+            <a href={r.url} target="_blank" rel="noopener noreferrer">{r.translated_title || r.title}</a>
           </h3>
-          {#if r.summary}<p>{r.summary.slice(0, 200)}{r.summary.length > 200 ? '…' : ''}</p>{/if}
+          {#if r.translated_title && r.language && r.language !== 'ko'}
+            <p class="orig-title">{r.title} <span class="lang">[{r.language.toUpperCase()}]</span></p>
+          {/if}
+          {#if r.translated_summary || r.summary}
+            <p>{(r.translated_summary || r.summary).slice(0, 200)}{(r.translated_summary || r.summary).length > 200 ? '…' : ''}</p>
+          {/if}
         </div>
       </li>
     {/each}
@@ -65,6 +70,8 @@
   .source { font-weight: 600; color: #2563eb; }
   h3 { margin: 0 0 6px; font-size: 15px; line-height: 1.4; }
   h3 a:hover { text-decoration: underline; }
+  .orig-title { font-size: 12px; color: #9ca3af; margin: 0 0 6px; line-height: 1.4; }
+  .lang { font-weight: 600; font-size: 11px; color: #6b7280; }
   .body p { color: #4b5563; font-size: 13px; line-height: 1.5; margin: 0; }
   .empty { color: #6b7280; padding: 40px; text-align: center; }
 </style>
