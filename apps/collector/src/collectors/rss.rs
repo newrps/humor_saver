@@ -27,15 +27,24 @@ pub async fn collect(pool: &PgPool, src: &Source) -> Result<i64> {
 
     // status 코드 무시 (일부 매체가 200 대신 404로 보내면서도 정상 RSS 반환 — bloter, IT조선 등)
     // 본문이 진짜 RSS면 파서가 처리, 아니면 파서가 에러
-    let resp = client.get(rss_url).send().await?;
+    let resp = client
+        .get(rss_url)
+        .header(
+            "Accept",
+            "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+        )
+        .send()
+        .await?;
     let status = resp.status();
     let bytes = resp.bytes().await?;
     if bytes.is_empty() {
         return Err(anyhow!("HTTP {} + 빈 본문", status));
     }
 
-    let feed = parser::parse(&bytes[..])
-        .map_err(|e| anyhow!("RSS 파싱 실패: {e}"))?;
+    let feed = parser::parse(&bytes[..]).map_err(|e| {
+        let preview = String::from_utf8_lossy(&bytes[..bytes.len().min(120)]);
+        anyhow!("RSS 파싱 실패 (HTTP {}, len={}): {e} — preview: {}", status, bytes.len(), preview)
+    })?;
 
     let total = feed.entries.len();
     let mut new_count = 0_i64;
