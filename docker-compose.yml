@@ -80,7 +80,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 6G
+          memory: 12G
 
   # ───────────────────────────────────────────────
   # 4. API — Rust (axum). 프론트가 호출.
