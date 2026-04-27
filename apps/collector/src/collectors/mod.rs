@@ -7,6 +7,7 @@ use tracing::{info, warn};
 
 use crate::db;
 
+pub mod clien;
 pub mod rss;
 
 /// 모든 활성 매체에 대해 수집 1라운드 실행
@@ -18,11 +19,12 @@ pub async fn run_all(pool: &PgPool) -> Result<()> {
     for src in &sources {
         let run_id = db::start_run(pool, Some(src.id)).await?;
         let started = Instant::now();
-        let result = if src.rss_url.is_some() {
+        let result = if src.url.contains("clien.net") {
+            clien::collect(pool, src).await
+        } else if src.rss_url.is_some() {
             rss::collect(pool, src).await
         } else {
-            // 빅카인즈 또는 매체별 크롤러 자리 (TODO)
-            warn!("[{}] RSS URL 없음 → 스킵 (TODO: 빅카인즈)", src.name);
+            warn!("[{}] RSS URL / 매체별 크롤러 없음 → 스킵", src.name);
             Ok(0)
         };
         let duration_ms = started.elapsed().as_millis() as i32;

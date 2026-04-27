@@ -14,8 +14,8 @@
     { "name": "PGR21 자유게시판", "category": "humor_kr", "language": "ko", "url": "https://www.pgr21.com", "rss": "https://www.pgr21.com/free.rss" },
     { "name": "PGR21 게임", "category": "humor_kr", "language": "ko", "url": "https://www.pgr21.com", "rss": "https://www.pgr21.com/game.rss" },
     { "name": "PGR21 유머", "category": "humor_kr", "language": "ko", "url": "https://www.pgr21.com", "rss": "https://www.pgr21.com/humor.rss" },
-    { "name": "클리앙 모두의공원", "category": "humor_kr", "language": "ko", "url": "https://www.clien.net", "rss": "https://www.clien.net/service/board/park.rss" },
-    { "name": "클리앙 새로운소식", "category": "humor_kr", "language": "ko", "url": "https://www.clien.net", "rss": "https://www.clien.net/service/board/news.rss" },
+    { "name": "클리앙 모두의공원", "category": "humor_kr", "language": "ko", "url": "https://www.clien.net/service/board/park" },
+    { "name": "클리앙 새로운소식", "category": "humor_kr", "language": "ko", "url": "https://www.clien.net/service/board/news" },
 
     { "name": "Reddit r/funny", "category": "humor_global", "language": "en", "url": "https://www.reddit.com/r/funny", "rss": "https://www.reddit.com/r/funny/.rss" },
     { "name": "Reddit r/memes", "category": "humor_global", "language": "en", "url": "https://www.reddit.com/r/memes", "rss": "https://www.reddit.com/r/memes/.rss" },
