@@ -11,12 +11,13 @@ pub struct Source {
     pub category: String,
     pub url: String,
     pub rss_url: Option<String>,
+    pub language: String,
     pub enabled: bool,
 }
 
 pub async fn list_enabled_sources(pool: &PgPool) -> Result<Vec<Source>> {
     let rows = sqlx::query_as::<_, Source>(
-        "SELECT id, name, category, url, rss_url, enabled
+        "SELECT id, name, category, url, rss_url, language, enabled
            FROM sources
           WHERE enabled = TRUE
           ORDER BY id",

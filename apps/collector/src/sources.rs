@@ -22,6 +22,8 @@ struct SourceEntry {
     region: Option<String>,
     #[serde(default)]
     field: Option<String>,
+    #[serde(default)]
+    language: Option<String>,
 }
 
 pub async fn sync_sources(pool: &PgPool, path: impl AsRef<Path>) -> Result<()> {
@@ -34,14 +36,15 @@ pub async fn sync_sources(pool: &PgPool, path: impl AsRef<Path>) -> Result<()> {
     for s in &file.sources {
         let res = sqlx::query(
             r#"
-            INSERT INTO sources (name, category, url, rss_url, region, field, enabled)
-            VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+            INSERT INTO sources (name, category, url, rss_url, region, field, language, enabled)
+            VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'ko'), TRUE)
             ON CONFLICT (name) DO UPDATE
                 SET category = EXCLUDED.category,
                     url = EXCLUDED.url,
                     rss_url = EXCLUDED.rss_url,
                     region = EXCLUDED.region,
-                    field = EXCLUDED.field
+                    field = EXCLUDED.field,
+                    language = EXCLUDED.language
             RETURNING (xmax = 0) AS inserted
             "#,
         )
@@ -51,6 +54,7 @@ pub async fn sync_sources(pool: &PgPool, path: impl AsRef<Path>) -> Result<()> {
         .bind(&s.rss)
         .bind(&s.region)
         .bind(&s.field)
+        .bind(&s.language)
         .fetch_one(pool)
         .await?;
         let was_inserted: bool = res.try_get("inserted").unwrap_or(false);

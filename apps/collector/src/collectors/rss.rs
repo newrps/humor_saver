@@ -104,7 +104,7 @@ pub async fn collect(pool: &PgPool, src: &Source) -> Result<i64> {
                 category: None,
                 published_at,
                 image_url,
-                language: None, // 매체 기본값 'ko' 사용
+                language: Some(src.language.trim().to_string()),
                 tags,
             },
         )

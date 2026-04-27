@@ -7,6 +7,7 @@
 data/postgres/
 data/qdrant/
 data/tei-cache/
+data/nllb-cache/
 
 # Rust 빌드 산출물
 apps/*/target/

@@ -142,6 +142,8 @@ services:
         condition: service_started
       tei:
         condition: service_started
+      nllb:
+        condition: service_started
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-news}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-news}
       QDRANT_URL: http://qdrant:6333
@@ -150,8 +152,25 @@ services:
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-intfloat/multilingual-e5-small}
       NLP_INTERVAL_SEC: ${NLP_INTERVAL_SEC:-60}
       NLP_BATCH_SIZE: ${NLP_BATCH_SIZE:-20}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-4-5-20251001}
+      NLLB_URL: http://nllb:8000
+
+  # ───────────────────────────────────────────────
+  # 6.5 NLLB — 번역 (외국어 → 한국어)
+  # ───────────────────────────────────────────────
+  nllb:
+    build:
+      context: ./apps/nllb
+      dockerfile: Dockerfile
+    container_name: humor-nllb
+    restart: unless-stopped
+    volumes:
+      - ./data/nllb-cache:/data
+    expose:
+      - "8000"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
 
   # ───────────────────────────────────────────────
   # 7. Discoverer — 매체 자동 발견 (일일 1회)
