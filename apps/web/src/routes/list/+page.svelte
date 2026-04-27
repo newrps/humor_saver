@@ -38,9 +38,14 @@
             <span class="time">{timeAgo(a.published_at || a.collected_at)}</span>
           </div>
           <h3>
-            <a href={a.url} target="_blank" rel="noopener noreferrer">{a.title}</a>
+            <a href={a.url} target="_blank" rel="noopener noreferrer">{a.translated_title || a.title}</a>
           </h3>
-          {#if a.summary}<p class="summary">{a.summary.slice(0, 140)}{a.summary.length > 140 ? '…' : ''}</p>{/if}
+          {#if a.translated_title && a.language && a.language !== 'ko'}
+            <p class="orig-title">{a.title} <span class="lang">[{a.language.toUpperCase()}]</span></p>
+          {/if}
+          {#if a.translated_summary || a.summary}
+            <p class="summary">{(a.translated_summary || a.summary).slice(0, 140)}{(a.translated_summary || a.summary).length > 140 ? '…' : ''}</p>
+          {/if}
           <a class="more" href="/articles/{a.id}">자세히</a>
         </div>
       </article>
@@ -63,6 +68,8 @@
   .source { font-weight: 600; color: #2563eb; }
   h3 { margin: 0 0 8px; font-size: 15px; line-height: 1.4; }
   h3 a:hover { text-decoration: underline; }
+  .orig-title { font-size: 12px; color: #9ca3af; margin: -4px 0 8px; line-height: 1.4; }
+  .lang { font-weight: 600; font-size: 11px; color: #6b7280; }
   .summary { color: #4b5563; font-size: 13px; line-height: 1.5; margin: 0 0 8px; flex: 1; }
   .more { font-size: 12px; color: #6b7280; }
 </style>
