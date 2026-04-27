@@ -31,6 +31,8 @@ pub async fn collect(pool: &PgPool, src: &Source) -> Result<i64> {
     let client = reqwest::Client::builder()
         .user_agent(USER_AGENT)
         .timeout(Duration::from_secs(20))
+        .cookie_store(true)
+        .http1_only()
         .build()?;
 
     // status 코드 무시 (일부 매체가 200 대신 404로 보내면서도 정상 RSS 반환 — bloter, IT조선 등)
