@@ -1,9 +1,42 @@
 <script>
   let { data } = $props();
   let a = $derived(data.article);
+  const SITE_URL = 'https://fun.zam.kr';
+  const SITE_NAME = 'Ps Humor';
 </script>
 
-<svelte:head><title>{a.title} · news-tracker</title></svelte:head>
+<svelte:head>
+  <title>{a.title} · {SITE_NAME}</title>
+  <meta name="description" content={a.summary || a.translated_summary || a.title} />
+  <meta name="author" content={a.author || a.source_name || SITE_NAME} />
+  <link rel="canonical" href={`${SITE_URL}/articles/${a.id}`} />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content={SITE_NAME} />
+  <meta property="og:title" content={a.title} />
+  <meta property="og:description" content={a.summary || a.translated_summary || a.title} />
+  <meta property="og:url" content={`${SITE_URL}/articles/${a.id}`} />
+  <meta property="og:locale" content="ko_KR" />
+  {#if a.image_url}<meta property="og:image" content={a.image_url} />{/if}
+  {#if a.published_at}<meta property="article:published_time" content={a.published_at} />{/if}
+  {#if a.source_name}<meta property="article:section" content={a.source_name} />{/if}
+  <meta name="twitter:card" content={a.image_url ? 'summary_large_image' : 'summary'} />
+  <meta name="twitter:title" content={a.title} />
+  <meta name="twitter:description" content={a.summary || a.translated_summary || a.title} />
+  {#if a.image_url}<meta name="twitter:image" content={a.image_url} />{/if}
+  {@html '<' + 'script type="application/ld+json">' + JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: a.title,
+    description: a.summary || undefined,
+    image: a.image_url ? [a.image_url] : undefined,
+    datePublished: a.published_at || undefined,
+    dateModified: a.collected_at || a.published_at || undefined,
+    author: { '@type': a.author ? 'Person' : 'Organization', name: a.author || a.source_name || SITE_NAME },
+    publisher: { '@type': 'Organization', name: a.source_name || SITE_NAME },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/articles/${a.id}` },
+    inLanguage: a.language || 'ko-KR'
+  }) + '<' + '/script>'}
+</svelte:head>
 
 <article>
   <div class="meta">
